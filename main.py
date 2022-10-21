@@ -14,6 +14,24 @@ import random
 import typing
 
 
+def outofbound(x,y,W,H):
+    """Cheacks if x,y is outof bound"""
+    if x<0 or x>=W or y<0 or y>=H:
+        return True
+    return False
+
+def is_snake_there(x,y,snakes, my_length):
+    """Cheacks if there is a snake at x,y"""
+    for snake in snakes:
+        for body_part in range(snake["length"]):
+            if (x == snake["body"][body_part]["x"]) and (y== snake["body"][body_part]["y"]):
+                return True
+    return False
+
+def is_save_location(x,y, snakes, my_length, W, H):
+    return not (outofbound(x,y,W,H) or is_snake_there(x,y,snakes, my_length))
+
+
 # info is called when you create your Battlesnake on play.battlesnake.com
 # and controls your Battlesnake's appearance
 # TIP: If you open your Battlesnake URL in a browser you should see this data
@@ -22,10 +40,10 @@ def info() -> typing.Dict:
 
     return {
         "apiversion": "1",
-        "author": "",  # TODO: Your Battlesnake Username
-        "color": "#888888",  # TODO: Choose color
-        "head": "default",  # TODO: Choose head
-        "tail": "default",  # TODO: Choose tail
+        "author": "EfaOsk",
+        "color": "#FF1493", 
+        "head": "safe",
+        "tail": "block-bum", 
     }
 
 
@@ -48,38 +66,20 @@ def move(game_state: typing.Dict) -> typing.Dict:
 
     # We've included code to prevent your Battlesnake from moving backwards
     my_head = game_state["you"]["body"][0]  # Coordinates of your head
-    my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
 
-    if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
-        is_move_safe["left"] = False
-
-    elif my_neck["x"] > my_head["x"]:  # Neck is right of head, don't move right
-        is_move_safe["right"] = False
-
-    elif my_neck["y"] < my_head["y"]:  # Neck is below head, don't move down
-        is_move_safe["down"] = False
-
-    elif my_neck["y"] > my_head["y"]:  # Neck is above head, don't move up
-        is_move_safe["up"] = False
-
-    # Prevent the Battlesnake from moving out of bounds
     board_width = game_state['board']['width']
     board_height = game_state['board']['height']
-    if my_head["x"] + 1 == board_width:
-        is_move_safe["right"] = False
-    elif my_head["x"] == 0:
-        is_move_safe["left"] = False
-    if my_head["y"] + 1 == board_height:
-        is_move_safe["up"] = False
-    elif my_head["y"] == 0:
-        is_move_safe["down"] = False
-    
+    snakes = game_state['board']['snakes']
 
-    # TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-    # my_body = game_state['you']['body']
-
-    # TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-    # opponents = game_state['board']['snakes']
+    # Make the snake un suicidal
+    if not is_save_location(my_head["x"]+1, my_head["y"], snakes, game_state["you"]["length"],board_width, board_height):
+        is_move_safe["right"]=False
+    if not is_save_location(my_head["x"]-1, my_head["y"], snakes, game_state["you"]["length"],board_width, board_height):
+        is_move_safe["left"]=False
+    if not is_save_location(my_head["x"], my_head["y"]+1, snakes, game_state["you"]["length"],board_width, board_height):  
+        is_move_safe["up"]=False
+    if not is_save_location(my_head["x"], my_head["y"]-1, snakes, game_state["you"]["length"],board_width, board_height):
+        is_move_safe["down"]=False
 
     # Are there any safe moves left?
     safe_moves = []
@@ -91,11 +91,9 @@ def move(game_state: typing.Dict) -> typing.Dict:
         print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
         return {"move": "down"}
 
-    # Choose a random move from the safe ones
+    # TODO: DeRandomize
     next_move = random.choice(safe_moves)
 
-    # TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-    # food = game_state['board']['food']
 
     print(f"MOVE {game_state['turn']}: {next_move}")
     return {"move": next_move}
