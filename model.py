@@ -46,7 +46,7 @@ class ReplayMemory(object):
 class SimpleModel(nn.Module):
     def __init__(self):
         super(SimpleModel, self).__init__()
-        # in: 3x11x11 out: 4
+        # in: {1, bs} x 11 x 11 out: 4
         self.model = nn.Sequential(
             nn.Flatten(start_dim=1),
             nn.Linear(11*11, 32),
@@ -91,7 +91,7 @@ def reward(game_state):
     reward =0.0
     # If I won: reward = 100 else: reward = -100
     if game_state["you"]["health"]== 100:
-        reward+=20.0
+        reward+=10.0
     else:
         reward+=1.0
     return reward
