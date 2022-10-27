@@ -45,33 +45,28 @@ class ReplayMemory(object):
 
 class SimpleModel(nn.Module):
     def __init__(self):
-        super().__init__()
+        super(SimpleModel, self).__init__()
         # in: 3x11x11 out: 4
         self.model = nn.Sequential(
-            # in: 3x11x11 out: 16x10x10
-            nn.Conv2d(3, 16, kernel_size=4, padding=1),
+            nn.Flatten(start_dim=1),
+            nn.Linear(11*11, 32),
             nn.ReLU(),
-            # in: 16x10x10 out: 32x8x8
-            nn.Conv2d(16, 32, kernel_size=3),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(32*8*8, 32),
             nn.Linear(32, 4))
 
 
     def forward(self, x):
-        print(x)
-        return self.model(x)
+        x = self.model(x)
+        return nn.functional.log_softmax(x, dim=1)
 
 model= SimpleModel()
-summary(model,(3, 11, 11))
+summary(model,(1, 1, 11, 11))
 
 
 
 
 
 # Train
-BATCH_SIZE = 10
+BATCH_SIZE = 1
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
@@ -93,12 +88,12 @@ steps_done= 0
 
 
 def reward(game_state):
-    reward =0
+    reward =0.0
     # If I won: reward = 100 else: reward = -100
     if game_state["you"]["health"]== 100:
-        reward+=20
+        reward+=20.0
     else:
-        reward+=2
+        reward+=1.0
     return reward
 
 
@@ -114,9 +109,19 @@ def select_action(game_state):
             # t.max(1) will return largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return policy_net(game_state).max(1)[1].view(1, 1)
+            print(torch.tensor([[torch.argmax(policy_net(game_state.float()))]], device=device, dtype=torch.long))
+            # print(torch.tensor([[a]], device=device, dtype=torch.long))
+
+
+            # a= torch.tensor([[random.randrange(4)]], device=device, dtype=torch.long)
+            # print(a)
+            # return a
+            # return a
+            return torch.tensor([[torch.argmax(policy_net(game_state.float()))]], device=device, dtype=torch.long)
     else:   # Otherwise select random action
-        return torch.tensor([[random.randrange(4)]], device=device, dtype=torch.long)
+        a= torch.tensor([[random.randrange(4)]], device=device, dtype=torch.long)
+        # print(a)
+        return a
 
 episode_durations = list()
 
@@ -126,6 +131,8 @@ episode_durations = list()
 def optimize_model():
     if len(memory) < BATCH_SIZE:
         return
+    # if True:
+    #     return
     transitions = memory.sample(BATCH_SIZE)
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
@@ -145,15 +152,15 @@ def optimize_model():
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken. These are the actions which would've been taken
     # for each batch state according to policy_net
-    state_action_values = policy_net(batch.state).gather(1, batch.action)
+    state_action_values = policy_net(state_batch.float()).gather(1, action_batch)
 
     # Compute V(s_{t+1}) for all next states.
     # Expected values of actions for non_final_next_states are computed based
     # on the "older" target_net; selecting their best reward with max(1)[0].
     # This is merged based on the mask, such that we'll have either the expected
     # state value or 0 in case the state was final.
-    next_state_values = torch.zeros(BATCH_SIZE, device=device)
-    next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+    next_state_values = target_net(non_final_next_states.float()).max(1)[0].detach()
+    # next_state_values[non_final_mask] = target_net(non_final_next_states.float()).max(1)[0].detach()
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 

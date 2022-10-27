@@ -63,12 +63,13 @@ def start(game_state: typing.Dict):
 def end(game_state: typing.Dict):
     # if Im still alive I won!
     i_won = False
-    R=-100
+    R=-100.0
     for snake in game_state["board"]["snakes"]:
         if game_state["you"]["id"] == snake["id"]:
             i_won= True
     if i_won:
-        R= 100
+        R= 100.0
+    R = torch.tensor([R], device=device)
     memory.push(prev_state, prev_move, process_state(game_state), R)
     optimize_model()
     target_net.load_state_dict(policy_net.state_dict())
@@ -82,7 +83,8 @@ def move(game_state: typing.Dict) -> typing.Dict:
     global prev_move
     global prev_state
     if not (prev_move == None):
-        memory.push(prev_state, prev_move, process_state(game_state), reward(game_state))
+        R = torch.tensor([reward(game_state)], device=device)
+        memory.push(prev_state, prev_move, process_state(game_state),R)
         optimize_model()
         target_net.load_state_dict(policy_net.state_dict())
 

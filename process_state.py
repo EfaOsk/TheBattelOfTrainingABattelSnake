@@ -31,8 +31,7 @@ def process_state(state):
             },
         "you": {"id":"dfc56876-9620-4c07-82fa-f1d206ac4e25","name":"Snake1", ...}
     """
-    ret= np.zeros((3, 11,11))
-
+    ret= np.zeros((3, 11, 11))
     my_snake= ret[0]
     other_snakes= ret[1]
     food_table= ret[2]
@@ -50,6 +49,6 @@ def process_state(state):
     for food in state["board"]["food"]:
         food_table[10-food["y"]][food["x"]]=1
     
-
-
-    return torch.from_numpy(ret)
+    ret0= np.zeros((1, 11, 11))
+    ret0[0]= ret[0]
+    return torch.from_numpy(ret0)
