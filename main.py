@@ -13,6 +13,8 @@ prev_state = None
 
 curr_live_time = 0
 
+file_name_policy= "./models/policy_net.pt"
+file_name_target= "./models/target_net.pt"
 
 
 
@@ -46,10 +48,10 @@ def end(game_state: typing.Dict):
     if i_won:
         R= 100.0
     print(f"you survived for", curr_live_time ," / ",game_state["turn"], " turns")
-    victory_log = open("victory_log.txt", "a")
+    victory_log = open("victory_log_1.txt", "a")
     victory_log.write(str(i_won)+", ")
     victory_log.close()
-    life_time_log = open("life_time_log.txt", "a")
+    life_time_log = open("life_time_log_1.txt", "a")
     life_time_log.write(str(curr_live_time)+", ")
     life_time_log.close()
     curr_live_time=0
@@ -58,6 +60,8 @@ def end(game_state: typing.Dict):
     optimize_model()
     target_net.load_state_dict(policy_net.state_dict())
     print("GAME OVER\n")
+    torch.save(policy_net.state_dict(), file_name_policy)
+    torch.save(target_net.state_dict(), file_name_target)
 
 
 # move is called on every turn and returns your next move
