@@ -31,24 +31,24 @@ def process_state(state):
             },
         "you": {"id":"dfc56876-9620-4c07-82fa-f1d206ac4e25","name":"Snake1", ...}
     """
-    ret= np.zeros((3, 11, 11))
-    my_snake= ret[0]
-    other_snakes= ret[1]
-    food_table= ret[2]
+    ret= np.zeros((1, 11, 11))
     for snake in state["board"]["snakes"]:
         if snake["id"]== state["you"]["id"]:
-            my_snake[10-snake["head"]["y"]][snake["head"]["x"]]=1
+            # my head
+            ret[0][10-snake["head"]["y"]][snake["head"]["x"]]=2
         else: 
-            other_snakes[10-snake["head"]["y"]][snake["head"]["x"]]=1
+            # oponents head
+            ret[0][10-snake["head"]["y"]][snake["head"]["x"]]=0.75
         for body_part in snake["body"][1:]:
             if snake["id"]== state["you"]["id"]:
-                my_snake[10-body_part["y"]][body_part["x"]]=0.5
+                # my body
+                ret[0][10-body_part["y"]][body_part["x"]]=1.5
             else: 
-                other_snakes[10-body_part["y"]][body_part["x"]]=0.5
+                # oponents body
+                ret[0][10-body_part["y"]][body_part["x"]]=0.25
     
     for food in state["board"]["food"]:
-        food_table[10-food["y"]][food["x"]]=1
+        # food location
+        ret[0][10-food["y"]][food["x"]]=1
     
-    ret0= np.zeros((1, 11, 11))
-    ret0[0]= ret[0]
-    return torch.from_numpy(ret0)
+    return torch.from_numpy(ret)
