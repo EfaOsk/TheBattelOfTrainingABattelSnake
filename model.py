@@ -15,9 +15,16 @@ import torch.optim as optim
 from torchsummary import summary
 
 
-
 # set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+BATCH_SIZE = 128
+GAMMA = 0.999
+EPS_START = 0.9
+EPS_END = 0.05
+EPS_DECAY = 200
+TARGET_UPDATE = 10
 
 
 
@@ -51,6 +58,12 @@ class SimpleModel(nn.Module):
             nn.Flatten(start_dim=1),
             nn.Linear(11*11, 32),
             nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
             nn.Linear(32, 4))
 
 
@@ -58,20 +71,9 @@ class SimpleModel(nn.Module):
         x = self.model(x)
         return nn.functional.log_softmax(x, dim=1)
 
-model= SimpleModel()
-summary(model,(1, 1, 11, 11))
+# model= SimpleModel()
+# summary(model,(1, 1, 11, 11))
 
-
-
-
-
-# Train
-BATCH_SIZE = 128
-GAMMA = 0.999
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 200
-TARGET_UPDATE = 10
 
 
 policy_net = SimpleModel().to(device)
@@ -86,6 +88,7 @@ memory = ReplayMemory()
 
 steps_done= 0
 
+# Train
 
 def reward(game_state):
     reward =0.0
@@ -123,12 +126,13 @@ def select_action(game_state):
         # print(a)
         return a
 
-episode_durations = list()
+
 
 
 
 
 def optimize_model():
+    global memory
     if len(memory) < BATCH_SIZE:
         return
     # if True:
